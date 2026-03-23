@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 project(mumlib)
 
 if (MSYS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS -static-libstdc++ -static-libgcc -static")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3 -DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS -static-libstdc++ -static-libgcc -static")
   add_definitions(-DOPT_TLS_OPENSSL)
 elseif (NOT APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
   add_definitions(-DOPT_TLS_OPENSSL -D_POSIX_C_SOURCE=200112L)
 elseif()
   LINK_DIRECTORIES(/opt/local/lib) # Include the default MacPorts library directory
