@@ -53,11 +53,11 @@ namespace mumlib {
     public:
         explicit Mumlib(Callback &callback);
 
-        Mumlib(Callback &callback, io_service &ioService);
+        Mumlib(Callback &callback, io_context &ioService);
 
         Mumlib(Callback &callback, MumlibConfiguration &configuration);
 
-        Mumlib(Callback &callback, io_service &ioService, MumlibConfiguration &configuration);
+        Mumlib(Callback &callback, io_context &ioService, MumlibConfiguration &configuration);
 
         virtual ~Mumlib();
 

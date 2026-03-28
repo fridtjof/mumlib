@@ -48,7 +48,7 @@ namespace mumlib {
 
     class Transport : boost::noncopyable {
     public:
-        Transport(io_service &ioService,
+        Transport(io_context &ioService,
                   ProcessControlMessageFunction processControlMessageFunc,
                   ProcessEncodedAudioPacketFunction processEncodedAudioPacketFunction,
                   bool noUdp = false,
@@ -84,7 +84,7 @@ namespace mumlib {
     private:
         log4cpp::Category &logger;
 
-        io_service &ioService;
+        io_context &ioService;
 
         pair<string, int> connectionParams;
 
@@ -115,7 +115,7 @@ namespace mumlib {
         ssl::stream<tcp::socket> sslSocket;
         uint8_t *sslIncomingBuffer;
 
-        deadline_timer pingTimer;
+        boost::asio::system_timer pingTimer;
         std::chrono::time_point<std::chrono::system_clock> lastReceivedUdpPacketTimestamp;
 
         boost::pool<> asyncBufferPool;

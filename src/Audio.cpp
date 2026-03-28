@@ -2,7 +2,7 @@
 
 #include <boost/format.hpp>
 
-static boost::posix_time::seconds RESET_SEQUENCE_NUMBER_INTERVAL(2);
+static std::chrono::seconds RESET_SEQUENCE_NUMBER_INTERVAL(2);
 
 namespace {
 
@@ -282,7 +282,7 @@ int mumlib::Audio::encodeAudioPacket(int target, int16_t *inputPcmBuffer, int in
     const int lastAudioPacketSentInterval = duration_cast<milliseconds>(
             system_clock::now() - lastEncodedAudioPacketTimestamp).count();
 
-    if (lastAudioPacketSentInterval > RESET_SEQUENCE_NUMBER_INTERVAL.total_milliseconds() + 1000) {
+    if (lastAudioPacketSentInterval > duration_cast<milliseconds>(RESET_SEQUENCE_NUMBER_INTERVAL + seconds(1)).count()) {
         logger.notice("Last audio packet was sent %d ms ago, resetting encoder.", lastAudioPacketSentInterval);
         resetEncoder();
     }

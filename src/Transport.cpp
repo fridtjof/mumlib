@@ -13,7 +13,7 @@
 
 using namespace std;
 
-static boost::posix_time::seconds PING_INTERVAL(4);
+static chrono::seconds PING_INTERVAL(4);
 
 const long CLIENT_VERSION = 0x01020A;
 const string CLIENT_RELEASE("Mumlib");
@@ -33,7 +33,7 @@ static map<MumbleProto::Reject_RejectType, string> rejectMessages = {
 };
 
 mumlib::Transport::Transport(
-        io_service &ioService,
+        io_context &ioService,
         mumlib::ProcessControlMessageFunction processMessageFunc,
         ProcessEncodedAudioPacketFunction processEncodedAudioPacketFunction,
         bool noUdp,
@@ -92,8 +92,10 @@ void mumlib::Transport::connect(
     try {
         if (not noUdp) {
             ip::udp::resolver resolverUdp(ioService);
-            ip::udp::resolver::query queryUdp(ip::udp::v4(), host, to_string(port));
-            udpReceiverEndpoint = *resolverUdp.resolve(queryUdp);
+            for (const auto& entry: resolverUdp.resolve(ip::udp::v4(), host, to_string(port))) {
+                udpReceiverEndpoint = entry;
+                break;
+            }
             udpSocket.open(ip::udp::v4());
 
             boost::array<char, 1> send_buf  = { 0 };
@@ -107,11 +109,9 @@ void mumlib::Transport::connect(
 
         ip::tcp::resolver resolverTcp(ioService);
         logger.warn("resolverTcp");
-        ip::tcp::resolver::query queryTcp(host, to_string(port));
-        logger.warn("queryTcp");
 
-        async_connect(sslSocket.lowest_layer(), resolverTcp.resolve(queryTcp),
-                      bind(&Transport::sslConnectHandler, this, boost::asio::placeholders::error));
+        async_connect(sslSocket.lowest_layer(), resolverTcp.resolve(host, to_string(port)),
+            bind(&Transport::sslConnectHandler, this, boost::asio::placeholders::error));
         logger.warn("async_connect try");
     } catch (runtime_error &exp) {
         throwTransportException(string("failed to establish connection: ") + exp.what());
@@ -281,7 +281,7 @@ void mumlib::Transport::pingTimerTick(const boost::system::error_code &e) {
                 const int lastUdpReceivedMilliseconds = duration_cast<milliseconds>(
                         system_clock::now() - lastReceivedUdpPacketTimestamp).count();
 
-                if (lastUdpReceivedMilliseconds > PING_INTERVAL.total_milliseconds() + 1000) {
+                if (lastUdpReceivedMilliseconds > duration_cast<milliseconds>(PING_INTERVAL + seconds(1)).count()) {
                     logger.warn("Didn't receive UDP ping in %d ms, falling back to TCP.", lastUdpReceivedMilliseconds);
                 }
             }
@@ -294,7 +294,7 @@ void mumlib::Transport::pingTimerTick(const boost::system::error_code &e) {
     }
 
     logger.warn("TimerTick!.");
-    pingTimer.expires_at(pingTimer.expires_at() + PING_INTERVAL);
+    pingTimer.expires_after(PING_INTERVAL);
     pingTimer.async_wait(boost::bind(&Transport::pingTimerTick, this, _1));
 }
 

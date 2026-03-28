@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.30)
 project(mumlib)
 
 if (MSYS)
@@ -7,22 +7,22 @@ if (MSYS)
 elseif (NOT APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
   add_definitions(-DOPT_TLS_OPENSSL -D_POSIX_C_SOURCE=200112L)
-elseif()
-  LINK_DIRECTORIES(/opt/local/lib) # Include the default MacPorts library directory
+else()
+  LINK_DIRECTORIES(/opt/homebrew/lib) # Include the default homebrew library directory
 endif()
 
-INCLUDE(FindPkgConfig)
 find_package(PkgConfig REQUIRED)
 
 if (NOT MSYS)
-find_package(Boost COMPONENTS system REQUIRED)
+find_package(Boost REQUIRED)
 endif()
 
 find_package(OpenSSL REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 
-pkg_check_modules(LOG4CPP "log4cpp")
-pkg_check_modules(OPUS "opus")
+pkg_check_modules(LOG4CPP "log4cpp" REQUIRED IMPORTED_TARGET)
+pkg_check_modules(Speex "speex" REQUIRED IMPORTED_TARGET)
+pkg_check_modules(Opus "opus" REQUIRED IMPORTED_TARGET)
 
 if (MSYS)
 include_directories(~/boost_1_72_0)
@@ -30,8 +30,8 @@ elseif (NOT APPLE)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 endif()
 
-include_directories(${OPENSSL_INCLUDE_DIR})
-include_directories(${PROTOBUF_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIRS})
+#include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${OPUS_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${LOG4CPP_INCLUDE_DIRS})
@@ -60,25 +60,25 @@ set(SPEEX_LIBRARIES
         speexdsp
         )
 
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS Mumble.proto)
+add_library(mumlib STATIC ${MUMLIB_SRC} ${MUMLIB_PUBLIC_HEADERS} ${MUMLIB_PRIVATE_HEADERS})
+target_include_directories(mumlib PUBLIC include)
 
-add_library(mumlib STATIC ${MUMLIB_SRC} ${MUMLIB_PUBLIC_HEADERS} ${MUMLIB_PRIVATE_HEADERS} ${PROTO_SRCS} ${PROTO_HDRS})
+protobuf_generate(TARGET mumlib PROTOS Mumble.proto)
 
+target_link_libraries(mumlib INTERFACE ${Boost_LIBRARIES})
 if (MSYS)
-target_link_libraries(mumlib
-        ${SPEEX_LIBRARIES}
-        ${PROTOBUF_LIBRARIES}
-        ${OPENSSL_LIBRARIES}
-        ${LOG4CPP_LIBRARIES}
-        ${OPUS_LIBRARIES} ws2_32 winmm z crypto ssl)
+target_link_libraries(mumlib PRIVATE
+        PkgConfig::Speex PkgConfig::Opus
+        OpenSSL::SSL OpenSSL::Crypto
+        PkgConfig::LOG4CPP
+        ws2_32 winmm z)
+target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
 else ()
-target_link_libraries(mumlib
-        ${SPEEX_LIBRARIES}
-        ${PROTOBUF_LIBRARIES}
-        ${OPENSSL_LIBRARIES}
-        ${LOG4CPP_LIBRARIES}
-        ${OPUS_LIBRARIES}
-        ${Boost_LIBRARIES})
+target_link_libraries(mumlib PRIVATE
+        PkgConfig::Speex PkgConfig::Opus
+        OpenSSL::SSL OpenSSL::Crypto
+        PkgConfig::LOG4CPP)
+    target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
 endif ()
 
 set_target_properties(mumlib PROPERTIES PUBLIC_HEADER "${MUMLIB_PUBLIC_HEADERS}")

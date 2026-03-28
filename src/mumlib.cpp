@@ -27,7 +27,7 @@ namespace mumlib {
         log4cpp::Category &logger = log4cpp::Category::getInstance("mumlib.Mumlib");
 
         bool externalIoService;
-        io_service &ioService;
+        io_context &ioService;
 
         Callback &callback;
 
@@ -43,13 +43,13 @@ namespace mumlib {
         std::vector<MumbleChannel> listMumbleChannel;
 
         _Mumlib_Private(Callback &callback, MumlibConfiguration &configuration)
-                : _Mumlib_Private(callback, *(new io_service()), configuration) {
+                : _Mumlib_Private(callback, *(new io_context()), configuration) {
             externalIoService = false;
         }
 
         _Mumlib_Private(
                 Callback &callback,
-                io_service &ioService,
+                io_context &ioService,
                 MumlibConfiguration &configuration)
                 : callback(callback),
                   ioService(ioService),
@@ -430,7 +430,7 @@ namespace mumlib {
         impl = new _Mumlib_Private(callback, conf);
     }
 
-    Mumlib::Mumlib(Callback &callback, io_service &ioService) {
+    Mumlib::Mumlib(Callback &callback, io_context &ioService) {
         MumlibConfiguration conf;
         impl = new _Mumlib_Private(callback, ioService, conf);
     }
@@ -438,7 +438,7 @@ namespace mumlib {
     Mumlib::Mumlib(Callback &callback, MumlibConfiguration &configuration)
             : impl(new _Mumlib_Private(callback, configuration)) { }
 
-    Mumlib::Mumlib(Callback &callback, io_service &ioService, MumlibConfiguration &configuration)
+    Mumlib::Mumlib(Callback &callback, io_context &ioService, MumlibConfiguration &configuration)
             : impl(new _Mumlib_Private(callback, ioService, configuration)) { }
 
     Mumlib::~Mumlib() {
