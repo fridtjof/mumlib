@@ -22,6 +22,7 @@ find_package(Protobuf CONFIG REQUIRED)
 
 pkg_check_modules(LOG4CPP "log4cpp" REQUIRED IMPORTED_TARGET)
 pkg_check_modules(Speex "speex" REQUIRED IMPORTED_TARGET)
+pkg_check_modules(SpeexDSP "speexdsp" REQUIRED IMPORTED_TARGET)
 pkg_check_modules(Opus "opus" REQUIRED IMPORTED_TARGET)
 
 if (MSYS)
@@ -68,14 +69,14 @@ protobuf_generate(TARGET mumlib PROTOS Mumble.proto)
 target_link_libraries(mumlib INTERFACE ${Boost_LIBRARIES})
 if (MSYS)
 target_link_libraries(mumlib PRIVATE
-        PkgConfig::Speex PkgConfig::Opus
+        PkgConfig::Speex PkgConfig::SpeexDSP PkgConfig::Opus
         OpenSSL::SSL OpenSSL::Crypto
         PkgConfig::LOG4CPP
         ws2_32 winmm z)
 target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
 else ()
 target_link_libraries(mumlib PRIVATE
-        PkgConfig::Speex PkgConfig::Opus
+        PkgConfig::Speex PkgConfig::SpeexDSP PkgConfig::Opus
         OpenSSL::SSL OpenSSL::Crypto
         PkgConfig::LOG4CPP)
     target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
