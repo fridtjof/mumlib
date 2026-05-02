@@ -105,7 +105,7 @@ namespace mumlib {
         PingState ping_state;
 
         udp::socket udpSocket;
-        ip::udp::endpoint udpReceiverEndpoint;
+        udp::endpoint udpReceiverEndpoint;
         uint8_t udpIncomingBuffer[MAX_UDP_LENGTH];
         CryptState cryptState;
 
