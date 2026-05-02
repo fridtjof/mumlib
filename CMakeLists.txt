@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.30)
 project(mumlib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 add_definitions(-DOPT_TLS_OPENSSL)
 if (MSYS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc -static")
