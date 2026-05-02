@@ -71,19 +71,13 @@ target_include_directories(mumlib PUBLIC include)
 protobuf_generate(TARGET mumlib PROTOS Mumble.proto)
 
 target_link_libraries(mumlib INTERFACE ${Boost_LIBRARIES})
-if (MSYS)
-target_link_libraries(mumlib PRIVATE
-        PkgConfig::Speex PkgConfig::SpeexDSP PkgConfig::Opus
-        OpenSSL::SSL OpenSSL::Crypto
-        PkgConfig::LOG4CPP
-        ws2_32 winmm z)
-target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
-else ()
 target_link_libraries(mumlib PRIVATE
         PkgConfig::Speex PkgConfig::SpeexDSP PkgConfig::Opus
         OpenSSL::SSL OpenSSL::Crypto
         PkgConfig::LOG4CPP)
-    target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
+target_link_libraries(mumlib PRIVATE protobuf::libprotobuf)
+if (MSYS)
+target_link_libraries(mumlib PRIVATE ws2_32 winmm z)
 endif ()
 
 set_target_properties(mumlib PROPERTIES PUBLIC_HEADER "${MUMLIB_PUBLIC_HEADERS}")
