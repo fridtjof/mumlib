@@ -35,11 +35,7 @@ elseif (NOT APPLE)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 endif()
 
-include_directories(${OPENSSL_INCLUDE_DIRS})
-#include_directories(${PROTOBUF_INCLUDE_DIRS})
-include_directories(${OPUS_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-include_directories(${LOG4CPP_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}) # protobuf
 include_directories(include)
 
 set(MUMLIB_PUBLIC_HEADERS include/mumlib.hpp include/mumlib/VarInt.hpp)
