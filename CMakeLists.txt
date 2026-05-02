@@ -73,11 +73,13 @@ endif ()
 set_target_properties(mumlib PROPERTIES PUBLIC_HEADER "${MUMLIB_PUBLIC_HEADERS}")
 
 add_executable(mumlib_example mumlib_example.cpp)
-
+target_link_libraries(mumlib_example mumlib PkgConfig::LOG4CPP)
 if (MSYS)
-target_link_libraries(mumlib_example mumlib ws2_32)
-else ()
-target_link_libraries(mumlib_example mumlib)
+target_link_libraries(mumlib_example ws2_32)
 endif ()
+
+if (APPLE)
+    target_include_directories(mumlib_example PRIVATE /opt/homebrew/include)
+endif()
 
 install(TARGETS DESTINATION mumlib LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include/mumlib)
