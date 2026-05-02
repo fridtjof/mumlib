@@ -383,7 +383,8 @@ void mumlib::Transport::processMessageInternal(MessageType messageType, uint8_t 
             break;
         case MessageType::PING: {
             MumbleProto::Ping ping;
-            ping.ParseFromArray(buffer, length);
+            if (!ping.ParseFromArray(buffer, length))
+                goto malformed;
             stringstream log;
             log << "Received ping.";
             if (ping.has_good()) {
@@ -408,7 +409,8 @@ void mumlib::Transport::processMessageInternal(MessageType messageType, uint8_t 
             break;
         case MessageType::REJECT: {
             MumbleProto::Reject reject;
-            reject.ParseFromArray(buffer, length);
+            if (!reject.ParseFromArray(buffer, length))
+                goto malformed;
 
             stringstream errorMesg;
             errorMesg << "failed to authenticate";
@@ -435,7 +437,8 @@ void mumlib::Transport::processMessageInternal(MessageType messageType, uint8_t 
         case MessageType::CRYPTSETUP: {
             if (not noUdp) {
                 MumbleProto::CryptSetup cryptsetup;
-                cryptsetup.ParseFromArray(buffer, length);
+                if (!cryptsetup.ParseFromArray(buffer, length))
+                    goto malformed;
 
                 if (cryptsetup.client_nonce().length() != AES_BLOCK_SIZE
                     or cryptsetup.server_nonce().length() != AES_BLOCK_SIZE
@@ -467,6 +470,11 @@ void mumlib::Transport::processMessageInternal(MessageType messageType, uint8_t 
         }
             break;
     }
+
+    return;
+
+malformed:
+    logger.warn("Malformed message, type = %d.", messageType);
 }
 
 void mumlib::Transport::sendUdpPing()
@@ -482,8 +490,7 @@ void mumlib::Transport::sendUdpPing()
     sendUdpAsync(&message[0], static_cast<int>(message.size()));
 }
 
-void mumlib::Transport::sendSsl(uint8_t *buff, int length) {
-
+void mumlib::Transport::sendSsl(uint8_t *buff, size_t length) {
     if (length > MAX_TCP_LENGTH) {
         logger.warn("Sending %d B of data via SSL. Maximal allowed data length to receive is %d B.", length,
                     MAX_TCP_LENGTH);
@@ -496,7 +503,7 @@ void mumlib::Transport::sendSsl(uint8_t *buff, int length) {
     }
 
     try {
-        write(sslSocket, boost::asio::buffer(buff, static_cast<size_t>(length)));
+        write(sslSocket, buffer(buff, length));
     } catch (boost::system::system_error &err) {
         throwTransportException(std::string("SSL send failed: ") + err.what());
     }
@@ -516,7 +523,7 @@ void mumlib::Transport::sendSslAsync(uint8_t *buff, int length) {
 
     async_write(
             sslSocket,
-            boost::asio::buffer(asyncBuff, static_cast<size_t>(length)),
+            buffer(asyncBuff, static_cast<size_t>(length)),
             [this, asyncBuff](const boost::system::error_code &ec, size_t bytesTransferred) {
                 asyncBufferPool.free(asyncBuff);
                 //logger.warn("Sent %d B.", bytesTransferred);
@@ -537,14 +544,12 @@ void mumlib::Transport::sendControlMessage(MessageType type, google::protobuf::M
 }
 
 void mumlib::Transport::sendControlMessagePrivate(MessageType type, google::protobuf::Message &message) {
-
-
     const uint16_t type_network = htons(static_cast<uint16_t>(type));
 
-    const int size = message.ByteSize();
+    const size_t size = message.ByteSizeLong();
     const uint32_t size_network = htonl((uint32_t) size);
 
-    const int length = sizeof(type_network) + sizeof(size_network) + size;
+    const size_t length = sizeof(type_network) + sizeof(size_network) + size;
 
     uint8_t buff[MAX_UDP_LENGTH];
 
@@ -552,7 +557,10 @@ void mumlib::Transport::sendControlMessagePrivate(MessageType type, google::prot
 
     memcpy(buff + sizeof(type_network), &size_network, sizeof(size_network));
 
-    message.SerializeToArray(buff + sizeof(type_network) + sizeof(size_network), size);
+    if (!message.SerializeToArray(buff + sizeof(type_network) + sizeof(size_network), static_cast<int>(size))) {
+        logger.warn("Serializing control message failed!");
+        return;
+    }
 
     sendSsl(buff, length);
 }
@@ -563,12 +571,12 @@ void mumlib::Transport::throwTransportException(string message) {
     throw TransportException(std::move(message));
 }
 
-mumlib::SslContextHelper::SslContextHelper(ssl::context &ctx, std::string cert_file, std::string privkey_file) {
-    if ( cert_file.size() > 0 ) {
-        ctx.use_certificate_file(cert_file, ssl::context::file_format::pem);
+mumlib::SslContextHelper::SslContextHelper(ssl::context &ctx, std::string cert_file_path, std::string privkey_file_path) {
+    if ( !cert_file_path.empty() ) {
+        ctx.use_certificate_file(cert_file_path, ssl::context::file_format::pem);
     }
-    if ( privkey_file.size() > 0 ) {
-        ctx.use_private_key_file(privkey_file, ssl::context::file_format::pem);
+    if ( !privkey_file_path.empty() ) {
+        ctx.use_private_key_file(privkey_file_path, ssl::context::file_format::pem);
     }
 }
 
@@ -589,7 +597,7 @@ void mumlib::Transport::sendEncodedAudioPacket(uint8_t *buffer, int length) {
 
         const uint32_t netLength = htonl(static_cast<uint32_t>(length));
 
-        const int packet = sizeof(netUdptunnelType) + sizeof(netLength) + length;
+        const size_t packet = sizeof(netUdptunnelType) + sizeof(netLength) + length;
 
         uint8_t packetBuff[MAX_UDP_LENGTH];
 

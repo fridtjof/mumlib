@@ -42,7 +42,7 @@ namespace mumlib {
     class SslContextHelper : boost::noncopyable {
         public:
             SslContextHelper(boost::asio::ssl::context &ctx,
-                    std::string cert_file, std::string privkey_file);
+                    std::string cert_file_path, std::string privkey_file_path);
             ~SslContextHelper() { };
     };
 
@@ -128,7 +128,7 @@ namespace mumlib {
 
         void doReceiveSsl();
 
-        void sendSsl(uint8_t *buff, int length);
+        void sendSsl(uint8_t *buff, size_t length);
 
         void sendSslAsync(uint8_t *buff, int length);
 
