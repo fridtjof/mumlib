@@ -7,7 +7,6 @@
 #include "mumlib.hpp"
 
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
 #include <openssl/sha.h>
 #include <log4cpp/Category.hh>
 
@@ -18,6 +17,7 @@
 #endif
 
 using namespace std;
+using namespace std::placeholders;
 using namespace boost::asio;
 
 using namespace mumlib;
@@ -56,8 +56,8 @@ namespace mumlib {
                   externalIoService(true),
                   transport(
                           ioService,
-                          boost::bind(&_Mumlib_Private::processIncomingTcpMessage, this, _1, _2, _3),
-                          boost::bind(&_Mumlib_Private::processAudioPacket, this, _1, _2, _3),
+                          std::bind(&_Mumlib_Private::processIncomingTcpMessage, this, _1, _2, _3),
+                          std::bind(&_Mumlib_Private::processAudioPacket, this, _1, _2, _3),
                           false,
                           configuration.cert_file,
                           configuration.privkey_file),

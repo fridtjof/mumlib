@@ -7,7 +7,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
 #include <boost/pool/pool.hpp>
 
 #include <log4cpp/Category.hh>

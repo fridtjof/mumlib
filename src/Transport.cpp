@@ -12,6 +12,7 @@
 #include <thread>
 
 using namespace std;
+using namespace std::placeholders;
 
 static chrono::seconds PING_INTERVAL(4);
 
@@ -55,7 +56,7 @@ mumlib::Transport::Transport(
 
     sslIncomingBuffer = new uint8_t[MAX_TCP_LENGTH];
 
-    pingTimer.async_wait(boost::bind(&Transport::pingTimerTick, this, _1));
+    pingTimer.async_wait(std::bind(&Transport::pingTimerTick, this, _1));
 }
 
 mumlib::Transport::~Transport() {
@@ -244,7 +245,7 @@ void mumlib::Transport::doReceiveUdp()
 void mumlib::Transport::sslConnectHandler(const boost::system::error_code &error) {
     if (!error) {
         sslSocket.async_handshake(ssl::stream_base::client,
-                                  boost::bind(&Transport::sslHandshakeHandler, this,
+                                  std::bind(&Transport::sslHandshakeHandler, this,
                                               boost::asio::placeholders::error));
     }
     else {
@@ -295,7 +296,7 @@ void mumlib::Transport::pingTimerTick(const boost::system::error_code &e) {
 
     logger.warn("TimerTick!.");
     pingTimer.expires_after(PING_INTERVAL);
-    pingTimer.async_wait(boost::bind(&Transport::pingTimerTick, this, _1));
+    pingTimer.async_wait(std::bind(&Transport::pingTimerTick, this, _1));
 }
 
 void mumlib::Transport::sendUdpAsync(uint8_t *buff, int length) {
