@@ -1,16 +1,18 @@
 cmake_minimum_required(VERSION 3.30)
 project(mumlib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-add_definitions(-DOPT_TLS_OPENSSL)
+# this could still be improved a lot by making more definitions and properties target specific
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+add_definitions(-DOPT_TLS_OPENSSL) # TODO: what is this for? can't find any ifdef for this anywhere
 if (MSYS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -static-libgcc -static")
   add_definitions(-DLOG4CPP_FIX_ERROR_COLLISION=1 -D__USE_W32_SOCKETS)
 elseif (NOT APPLE)
   add_definitions(-D_POSIX_C_SOURCE=200112L)
 endif()
-
-
 if (APPLE)
     link_directories(/opt/homebrew/lib) # Include the default homebrew library directory
 endif()
@@ -19,6 +21,8 @@ find_package(PkgConfig REQUIRED)
 
 if (NOT MSYS)
 find_package(Boost REQUIRED)
+else()
+include_directories(~/boost_1_72_0)
 endif()
 
 find_package(OpenSSL REQUIRED)
@@ -29,14 +33,8 @@ pkg_check_modules(Speex "speex" REQUIRED IMPORTED_TARGET)
 pkg_check_modules(SpeexDSP "speexdsp" REQUIRED IMPORTED_TARGET)
 pkg_check_modules(Opus "opus" REQUIRED IMPORTED_TARGET)
 
-if (MSYS)
-include_directories(~/boost_1_72_0)
-elseif (NOT APPLE)
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-endif()
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}) # protobuf
-include_directories(include)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}) # needed for protobuf output, idk
 
 set(MUMLIB_PUBLIC_HEADERS include/mumlib.hpp include/mumlib/VarInt.hpp)
 
@@ -55,10 +53,6 @@ set(MUMLIB_SRC
         src/VarInt.cpp
         src/Transport.cpp
         src/Audio.cpp
-        )
-
-set(SPEEX_LIBRARIES
-        speexdsp
         )
 
 add_library(mumlib STATIC ${MUMLIB_SRC} ${MUMLIB_PUBLIC_HEADERS} ${MUMLIB_PRIVATE_HEADERS})
