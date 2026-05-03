@@ -393,8 +393,8 @@ namespace mumlib {
         }
 
         bool isListUserContains(int sessionId) {
-            for(int i = 0; i < listMumbleUser.size(); i++)
-                if(listMumbleUser[i].sessionId == sessionId)
+            for(auto & user : listMumbleUser)
+                if(user.sessionId == sessionId)
                     return true;
             return false;
         }
@@ -409,8 +409,8 @@ namespace mumlib {
         }
 
         bool isListChannelContains(int channelId) {
-            for(int i = 0; i < listMumbleChannel.size(); i++)
-                if(listMumbleChannel[i].channelId == channelId)
+            for(auto & channel : listMumbleChannel)
+                if(channel.channelId == channelId)
                     return true;
             return false;
         }
@@ -513,8 +513,8 @@ namespace mumlib {
     }
 
     void Mumlib::joinChannel(string name) {
-        int channelId = Mumlib::getChannelIdBy(name);
-        Mumlib::joinChannel(channelId);
+        int channelId = getChannelIdBy(name);
+        joinChannel(channelId);
     }
 
     void Mumlib::sendVoiceTarget(int targetId, VoiceTargetType type, int id) {
@@ -598,7 +598,7 @@ namespace mumlib {
 
         SHA1((unsigned char*) val.c_str(), val.size(), digest);
         for(int i = 0; i < SHA_DIGEST_LENGTH; i++)
-            sprintf(&mdString[i*2], "%02x", (unsigned int) digest[i]);
+            snprintf(&mdString[i*2], 3, "%02x", (unsigned int) digest[i]);
 
         switch (field) {
             case UserState::COMMENT:
@@ -616,33 +616,33 @@ namespace mumlib {
     }
 
     int Mumlib::getChannelIdBy(string name) {
-        vector<mumlib::MumbleChannel> listMumbleChannel = impl->listMumbleChannel;
-        for(int i = 0; i < listMumbleChannel.size(); i++)
-            if(listMumbleChannel[i].name == name)
-                return listMumbleChannel[i].channelId;
+        const vector<MumbleChannel> listMumbleChannel = impl->listMumbleChannel;
+        for(auto & channel : listMumbleChannel)
+            if(channel.name == name)
+                return channel.channelId;
         return -1;
     }
 
     int Mumlib::getUserIdBy(string name) {
-        vector<mumlib::MumbleUser> listMumbleUser = impl->listMumbleUser;
-        for(int i = 0; i < listMumbleUser.size(); i++)
-            if(listMumbleUser[i].name == name)
-                return listMumbleUser[i].sessionId;
+        const vector<MumbleUser> listMumbleUser = impl->listMumbleUser;
+        for(auto & user : listMumbleUser)
+            if (user.name == name)
+                return user.sessionId;
         return -1;
     }
 
     bool Mumlib::isSessionIdValid(int sessionId) {
-        vector<mumlib::MumbleUser> listMumbleUser = impl->listMumbleUser;
-        for(int i = 0; i < listMumbleUser.size(); i++)
-            if(listMumbleUser[i].sessionId == sessionId)
+        vector<MumbleUser> listMumbleUser = impl->listMumbleUser;
+        for(const auto & user : listMumbleUser)
+            if (user.sessionId == sessionId)
                 return true;
         return false;
     }
 
     bool Mumlib::isChannelIdValid(int channelId) {
-        vector<mumlib::MumbleChannel> listMumbleChannel = impl->listMumbleChannel;
-        for(int i = 0; i < listMumbleChannel.size(); i++)
-            if(listMumbleChannel[i].channelId == channelId)
+        vector<MumbleChannel> listMumbleChannel = impl->listMumbleChannel;
+        for(const auto & channel : listMumbleChannel)
+            if (channel.channelId == channelId)
                 return true;
         return false;
     }
