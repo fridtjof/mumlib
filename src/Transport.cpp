@@ -112,7 +112,7 @@ void mumlib::Transport::connect(
         logger.warn("resolverTcp");
 
         async_connect(sslSocket.lowest_layer(), resolverTcp.resolve(host, to_string(port)),
-            bind(&Transport::sslConnectHandler, this, boost::asio::placeholders::error));
+            [this](auto err, const auto&) { sslConnectHandler(err); });
         logger.warn("async_connect try");
     } catch (runtime_error &exp) {
         throwTransportException(string("failed to establish connection: ") + exp.what());
@@ -137,10 +137,10 @@ void mumlib::Transport::disconnect()
         }
 
         state = ConnectionState::NOT_CONNECTED;
-        printf("Not Connected\n");
+        logger.info("Not Connected\n");
     }
 
-    printf("Disconnected\n");
+    logger.info("Disconnected\n");
     std::this_thread::sleep_for(std::chrono::seconds(3));
 }
 
@@ -245,10 +245,10 @@ void mumlib::Transport::doReceiveUdp()
 void mumlib::Transport::sslConnectHandler(const boost::system::error_code &error) {
     if (!error) {
         sslSocket.async_handshake(ssl::stream_base::client,
-                                  std::bind(&Transport::sslHandshakeHandler, this,
-                                              boost::asio::placeholders::error));
+                                  [this](auto& err) { sslHandshakeHandler(err); });
     }
     else {
+        logger.warn("boost error: %s", error.to_string().c_str());
         disconnect();
     }
 }
@@ -296,7 +296,7 @@ void mumlib::Transport::pingTimerTick(const boost::system::error_code &e) {
 
     logger.warn("TimerTick!.");
     pingTimer.expires_after(PING_INTERVAL);
-    pingTimer.async_wait(std::bind(&Transport::pingTimerTick, this, _1));
+    pingTimer.async_wait([this](auto err) { this->pingTimerTick(err); });
 }
 
 void mumlib::Transport::sendUdpAsync(uint8_t *buff, int length) {
@@ -611,8 +611,7 @@ void mumlib::Transport::sendEncodedAudioPacket(uint8_t *buffer, int length) {
 }
 
 void mumlib::Transport::processAudioPacket(uint8_t *buff, int length) {
-    auto type = static_cast<AudioPacketType >((buff[0] & 0xE0) >> 5);
-    switch (type) {
+    switch (auto type = static_cast<AudioPacketType >((buff[0] & 0xE0) >> 5)) {
         case AudioPacketType::CELT_Alpha:
         case AudioPacketType::Speex:
         case AudioPacketType::CELT_Beta:
